@@ -1,0 +1,241 @@
+Haber (Hava Durumu).cs
+using System;
+using System.Data.SqlClient;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using Newtonsoft.Json;
+
+namespace WeatherApp
+{
+    public partial class MainForm : Form
+    {
+        private const string apiKey = "f8f67dbc7740ee4753860db873db8f9d"; // Kendi API anahtarınızı buraya ekleyin
+        private const string baseApiUrl = "https://api.openweathermap.org/data/2.5/weather";
+
+        public MainForm()
+        {
+            InitializeComponent();
+        }
+
+        private async void btnFetchWeather_Click(object sender, EventArgs e)
+        {
+            await FetchWeatherAsync();
+        }
+
+        private async Task FetchWeatherAsync()
+        {
+            string city = txtCityName.Text.Trim();
+
+            if (string.IsNullOrEmpty(city))
+            {
+                lblError.Text = "Lütfen bir şehir adı girin.";
+                return;
+            }
+
+            string apiUrl = $"{baseApiUrl}?q={city}&units=metric&appid={apiKey}";
+
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    HttpResponseMessage response = await client.GetAsync(apiUrl);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string jsonString = await response.Content.ReadAsStringAsync();
+
+                        var weatherData = JsonConvert.DeserializeObject<WeatherResponse>(jsonString);
+
+                        lblWeatherInfo.Text = $"Şehir: {weatherData.name}\n" +
+                                              $"Sıcaklık: {weatherData.main.temp} °C\n" +
+                                              $"Hava: {weatherData.weather[0].description}";
+
+                        lblError.Text = "";
+                    }
+                    else
+                    {
+                        lblError.Text = $"Hata: {response.StatusCode} - {response.ReasonPhrase}";
+                    }
+                }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                lblError.Text = $"HTTP Hatası: {httpEx.Message}";
+            }
+            catch (Exception ex)
+            {
+                lblError.Text = $"Genel hata: {ex.Message}";
+            }
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            lblWeatherInfo.Text = "";
+            lblError.Text = "";
+        }
+
+        private void MainForm_Load_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void weatherIcon_Click(object sender, EventArgs e)
+        {
+
+        }
+    }
+
+    public class WeatherResponse
+    {
+        public string name { get; set; }
+        public Main main { get; set; } 
+        public Weather[] weather { get; set; } 
+    }
+
+    public class Main
+    {
+        public double temp { get; set; } 
+    }
+
+    public class Weather
+    {
+        public string description { get; set; } 
+    }
+}
+
+Program.cs
+using System;
+using System.Windows.Forms;
+
+namespace WeatherApp
+{
+    static class Program
+    {
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new MainForm());
+        }
+    }
+}
+
+Haber (HavaDurumu).designer.cs
+
+namespace WeatherApp
+{
+    partial class MainForm
+    {
+        /// <summary>
+        /// Gerekli tasarımcı değişkeni.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Kullanılan tüm kaynakları temizleyin.
+        /// </summary>
+        ///<param name="disposing">yönetilen kaynaklar dispose edilmeliyse doğru; aksi halde yanlış.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer üretilen kod
+
+        /// <summary>
+        /// Tasarımcı desteği için gerekli metot - bu metodun 
+        ///içeriğini kod düzenleyici ile değiştirmeyin.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            this.lblWeatherInfo = new System.Windows.Forms.Label();
+            this.lblError = new System.Windows.Forms.Label();
+            this.txtCityName = new System.Windows.Forms.TextBox();
+            this.btnFetchWeather = new System.Windows.Forms.Button();
+            this.weatherIcon = new System.Windows.Forms.PictureBox();
+            ((System.ComponentModel.ISupportInitialize)(this.weatherIcon)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // lblWeatherInfo
+            // 
+            this.lblWeatherInfo.AutoSize = true;
+            this.lblWeatherInfo.Location = new System.Drawing.Point(20, 100);
+            this.lblWeatherInfo.Name = "lblWeatherInfo";
+            this.lblWeatherInfo.Size = new System.Drawing.Size(0, 13);
+            this.lblWeatherInfo.TabIndex = 0;
+            // 
+            // lblError
+            // 
+            this.lblError.AutoSize = true;
+            this.lblError.ForeColor = System.Drawing.Color.Red;
+            this.lblError.Location = new System.Drawing.Point(20, 140);
+            this.lblError.Name = "lblError";
+            this.lblError.Size = new System.Drawing.Size(0, 13);
+            this.lblError.TabIndex = 1;
+            // 
+            // txtCityName
+            // 
+            this.txtCityName.Location = new System.Drawing.Point(20, 20);
+            this.txtCityName.Name = "txtCityName";
+            this.txtCityName.Size = new System.Drawing.Size(200, 20);
+            this.txtCityName.TabIndex = 2;
+            // 
+            // btnFetchWeather
+            // 
+            this.btnFetchWeather.Location = new System.Drawing.Point(240, 18);
+            this.btnFetchWeather.Name = "btnFetchWeather";
+            this.btnFetchWeather.Size = new System.Drawing.Size(100, 23);
+            this.btnFetchWeather.TabIndex = 3;
+            this.btnFetchWeather.Text = "Hava Durumu Al";
+            this.btnFetchWeather.UseVisualStyleBackColor = true;
+            this.btnFetchWeather.Click += new System.EventHandler(this.btnFetchWeather_Click);
+            // 
+            // weatherIcon
+            // 
+            this.weatherIcon.Image = global::HABER_SAYFASI.Properties.Resources.hava;
+            this.weatherIcon.Location = new System.Drawing.Point(240, 81);
+            this.weatherIcon.Name = "weatherIcon";
+            this.weatherIcon.Size = new System.Drawing.Size(89, 83);
+            this.weatherIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.weatherIcon.TabIndex = 4;
+            this.weatherIcon.TabStop = false;
+            this.weatherIcon.Click += new System.EventHandler(this.weatherIcon_Click);
+            // 
+            // MainForm
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(388, 225);
+            this.Controls.Add(this.weatherIcon);
+            this.Controls.Add(this.btnFetchWeather);
+            this.Controls.Add(this.txtCityName);
+            this.Controls.Add(this.lblError);
+            this.Controls.Add(this.lblWeatherInfo);
+            this.MaximizeBox = false;
+            this.Name = "MainForm";
+            this.Text = "Hava Durumu Uygulaması";
+            this.Load += new System.EventHandler(this.MainForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.weatherIcon)).EndInit();
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
+        }
+
+        #endregion
+
+        private System.Windows.Forms.Label lblWeatherInfo;
+        private System.Windows.Forms.Label lblError;
+        private System.Windows.Forms.TextBox txtCityName;
+        private System.Windows.Forms.Button btnFetchWeather;
+        private System.Windows.Forms.PictureBox weatherIcon;
+    }
+}
